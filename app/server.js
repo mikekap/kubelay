@@ -2,7 +2,6 @@ import path from 'path';
 import express from 'express';
 import React from 'react';
 import {renderToString} from 'react-dom/server';
-import createLocation from 'history/lib/createLocation';
 import Helmet from 'react-helmet';
 import {RoutingContext, match} from 'react-router';
 import routes from './routes';
@@ -17,9 +16,7 @@ app.set('x-powered-by', false);
 app.use(express.static(publicPath));
 
 app.use((req, res, next) => {
-  let location = createLocation(req.originalUrl);
-
-  match({routes, location}, (error, redirectLocation, renderProps) => {
+  match({routes, location: req.url}, (error, redirectLocation, renderProps) => {
     if (redirectLocation) return res.redirect(redirectLocation.pathname);
     if (error) return next(error.message);
     if (renderProps == null) return next(error);
@@ -33,7 +30,6 @@ app.use((req, res, next) => {
           `<title>${helmet.title}</title>`,
           helmet.meta,
           helmet.link,
-          `<meta charset="utf-8"/>`,
           `<link rel="stylesheet" href="${assetsPath}/app.css"></link>`,
         `</head>`,
         `<body>`,
@@ -42,7 +38,7 @@ app.use((req, res, next) => {
         `<script type="text/javascript" src="${assetsPath}/app.js"></script>`,
       `</html>`
     ].join('');
-    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   });
 });

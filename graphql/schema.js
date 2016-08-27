@@ -1,33 +1,43 @@
 import {
-  GraphQLSchema,
-  GraphQLObjectType,
-  GraphQLString,
-  GraphQLInt,
-  GraphQLList
+    GraphQLSchema,
+    GraphQLObjectType,
+    GraphQLString,
+    GraphQLInt,
+    GraphQLNonNull,
+    GraphQLInterfaceType,
+    GraphQLScalarType,
+    GraphQLUnionType,
+    GraphQLBoolean,
+    GraphQLList
 } from 'graphql/type';
-import {resolver} from 'graphql-sequelize';
-import Project from '../storage/models/Project';
+import { nodeDefinitions } from './common';
+import { Pod, AllContainerStates } from './pod';
+import { AllEnvVarTypes } from './env_vars';
+import { AllPodVolumeTypes } from './volumes';
 
-const ProjectType = new GraphQLObjectType({
-  name: 'ProjectType',
-  fields: {
-    id: {type: GraphQLInt},
-    name: {type: GraphQLString}
-  }
-});
-
-const RootType = new GraphQLObjectType({
-  name: 'RootType',
-  fields: {
-    projects: {
-      type: new GraphQLList(ProjectType),
-      resolve: resolver(Project)
+const QueryType = new GraphQLObjectType({
+    name: 'QueryType',
+    fields: {
+        node: nodeDefinitions.nodeField,
+        podById: {
+            type: Pod,
+            args: {
+                namespace: {type: GraphQLString},
+                name: {type: new GraphQLNonNull(GraphQLString)},
+            },
+            async resolve(root, {namespace, name}, {kube}) {
+                namespace = namespace || kube.credentials.namespace;
+                return await kube.request({
+                    url: `/api/v1/namespaces/${namespace}/pods/${name}`
+                });
+            }
+        }
     }
-  }
 });
 
 const schema = new GraphQLSchema({
-  query: RootType
+    types: [].concat(AllEnvVarTypes, AllPodVolumeTypes, AllContainerStates, [Pod]),
+    query: QueryType
 });
 
 export default schema;

@@ -17,11 +17,23 @@ import {PodVolume} from './volumes';
 import GraphQLJSON from 'graphql-type-json';
 import * as GraphQLRelay from "graphql-relay";
 
+const {connectionType: EventConnection} =
+        GraphQLRelay.connectionDefinitions({name: 'NodeEvents', nodeType: Event});
+
 exports.Node = new GraphQLObjectType({
-    name: 'Node',
+    name: 'KubeNode',
     interfaces: [nodeDefinitions.nodeInterface],
     fields: {
+        id: GraphQLRelay.globalIdField('Node', e => e.metadata.name),
         metadata: {type: Metadata},
+        events: {
+            type: EventConnection,
+            args: GraphQLRelay.connectionArgs,
+            resolve: (e, args, {loaders}) => GraphQLRelay.connectionFromPromisedArray(
+                loaders.eventsByObjectLoader.load(e),
+                args
+            )
+        },
         status: {type: new GraphQLObjectType({
             name: 'NodeStatus',
             fields: {

@@ -11,19 +11,26 @@ import { Kind } from 'graphql/language'
 import GraphQLJSON from 'graphql-type-json';
 import * as GraphQLRelay from 'graphql-relay';
 
-export async function genericLookup({kind, namespace, name}) {
+export async function genericLookup({kind, namespace, name}, args, {kube, loaders}) {
     if (kind == 'Pod') {
-        return await kube.request(`/api/v1/namespaces/${namespace}/pods/${name}`);
+        return await loaders.podLoader.load({name, namespace});
     } else if (kind == 'Event') {
-        return await kube.request(`/api/v1/namespaces/${namespace}/events/${name}`);
+        return await loaders.eventLoader.load({name, namespace});
+    } else if (kind == 'Node') {
+        return await loaders.nodeByIdLoader.load({name});
     }
     return null;
 }
 
-exports.nodeDefinitions = GraphQLRelay.nodeDefinitions(async (globalId, {kube}) => {
+exports.nodeDefinitions = GraphQLRelay.nodeDefinitions(async (globalId, {loaders}) => {
     const {type, id} = GraphQLRelay.fromGlobalId(globalId);
-    let [namespace, name] = id.split('/');
-    return genericLookup({kind: type, namespace, name});
+    var [namespace, name] = id.split('/');
+    if (!name) {
+        name = namespace;
+        namespace = null;
+    }
+    let result = await genericLookup({kind: type, namespace, name}, {}, {loaders});
+    return result;
 });
 
 function coerceDate (value) {

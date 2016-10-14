@@ -14,6 +14,15 @@ import { nodeDefinitions } from './common';
 import { Pod, AllContainerStates } from './pod';
 import { AllEnvVarTypes } from './env_vars';
 import { AllPodVolumeTypes } from './volumes';
+import { Node } from './node';
+import { Event } from './event';
+import * as GraphQLRelay from "graphql-relay";
+
+const {connectionType: AllNodesConnection} =
+    GraphQLRelay.connectionDefinitions({name: 'AllNodes', nodeType: Node});
+
+const {connectionType: AllPodsConnection} =
+    GraphQLRelay.connectionDefinitions({name: 'AllPods', nodeType: Pod});
 
 const QueryType = new GraphQLObjectType({
     name: 'QueryType',
@@ -25,18 +34,43 @@ const QueryType = new GraphQLObjectType({
                 namespace: {type: GraphQLString},
                 name: {type: new GraphQLNonNull(GraphQLString)},
             },
-            async resolve(root, {namespace, name}, {kube}) {
-                namespace = namespace || kube.credentials.namespace;
-                return await kube.request({
-                    url: `/api/v1/namespaces/${namespace}/pods/${name}`
-                });
+            async resolve(root, {namespace, name}, {loaders}) {
+                return await loaders.podLoader.load({namespace, name});
+            }
+        },
+        kubeNodeById: {
+            type: Node,
+            args: {
+                name: {type: GraphQLString},
+            },
+            async resolve(root, {name}, {loaders}) {
+                return await loaders.nodeByIdLoader.load(name);
+            }
+        },
+        kubeNodes: {
+            type: AllNodesConnection,
+            args: GraphQLRelay.connectionArgs,
+            async resolve(root, args, {loaders}) {
+                const nodes = await loaders.allNodes;
+                return GraphQLRelay.connectionFromArray(nodes, args);
+            }
+        },
+        pods: {
+            type: AllPodsConnection,
+            args: {
+                ...GraphQLRelay.connectionArgs,
+                namespace: {type: GraphQLString},
+            },
+            async resolve(root, {namespace, ...args}, {loaders}) {
+                const nodes = await loaders.podsByNamespaceLoader.load(namespace || "");
+                return GraphQLRelay.connectionFromArray(nodes, args);
             }
         }
     }
 });
 
 const schema = new GraphQLSchema({
-    types: [].concat(AllEnvVarTypes, AllPodVolumeTypes, AllContainerStates, [Pod]),
+    types: [].concat(AllEnvVarTypes, AllPodVolumeTypes, AllContainerStates, [Pod, Event, Node]),
     query: QueryType
 });
 

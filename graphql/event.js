@@ -16,8 +16,9 @@ import * as GraphQLRelay from "graphql-relay";
 
 exports.Event = new GraphQLObjectType({
     name: 'Event',
+    interfaces: [nodeDefinitions.nodeInterface],
     fields: {
-        id: GraphQLRelay.globalIdField('Pod'),
+        id: GraphQLRelay.globalIdField('Event', e => `${e.metadata.namespace}/${e.metadata.name}`),
         metadata: {type: Metadata},
         involvedObject: {type: new GraphQLObjectType({
             name: 'EventInvolvedObject',

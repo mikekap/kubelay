@@ -3,7 +3,7 @@ import express from 'express';
 import React from 'react';
 import {renderToString} from 'react-dom/server';
 import Helmet from 'react-helmet';
-import {RoutingContext, match} from 'react-router';
+import {RouterContext, match} from 'react-router';
 import routes from './routes';
 
 const env = process.env;
@@ -21,7 +21,7 @@ app.use((req, res, next) => {
     if (error) return next(error.message);
     if (renderProps == null) return next(error);
 
-    let markup = renderToString(<RoutingContext {...renderProps}/>);
+    let markup = renderToString(<RouterContext {...renderProps}/>);
     let helmet = Helmet.rewind();
     let html = [
       `<!DOCTYPE html>`,

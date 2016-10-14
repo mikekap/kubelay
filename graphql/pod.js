@@ -122,13 +122,13 @@ exports.PodSpec = new GraphQLObjectType({
 });
 
 var {connectionType: EventConnection} =
-    GraphQLRelay.connectionDefinitions({nodeType: Event});
+    GraphQLRelay.connectionDefinitions({name: 'PodEvents', nodeType: Event});
 
 exports.Pod = new GraphQLObjectType({
     name: 'Pod',
     interfaces: [nodeDefinitions.nodeInterface],
     fields: {
-        id: GraphQLRelay.globalIdField('Pod'),
+        id: GraphQLRelay.globalIdField('Pod', e => `${e.metadata.namespace}/${e.metadata.name}`),
         metadata: {type: Metadata},
         spec: {type: exports.PodSpec},
         containers: {
@@ -144,8 +144,8 @@ exports.Pod = new GraphQLObjectType({
         events: {
             type: EventConnection,
             args: GraphQLRelay.connectionArgs,
-            resolve: (e, args, {kube}) => GraphQLRelay.connectionFromPromisedArray(
-                kube.getEventsForObject(e),
+            resolve: (e, args, {loaders}) => GraphQLRelay.connectionFromPromisedArray(
+                loaders.eventsByObjectLoader.load(e),
                 args
             )
         },

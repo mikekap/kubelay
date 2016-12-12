@@ -10,15 +10,11 @@ import {
     GraphQLBoolean,
     GraphQLList
 } from 'graphql/type';
-import {nodeDefinitions, Metadata, KubernetesDateType} from './common';
-import {EnvVar} from './env_vars';
-import {Event} from './event';
-import {PodVolume} from './volumes';
+import {nodeDefinitions} from './base';
+import {Metadata, KubernetesDateType} from './common';
+import {EventConnection} from './event';
 import GraphQLJSON from 'graphql-type-json';
 import * as GraphQLRelay from "graphql-relay";
-
-const {connectionType: EventConnection} =
-        GraphQLRelay.connectionDefinitions({name: 'NodeEvents', nodeType: Event});
 
 exports.Node = new GraphQLObjectType({
     name: 'KubeNode',

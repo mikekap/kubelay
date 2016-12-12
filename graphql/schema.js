@@ -10,13 +10,17 @@ import {
     GraphQLBoolean,
     GraphQLList
 } from 'graphql/type';
-import { nodeDefinitions } from './common';
+import { nodeDefinitions } from './base';
+import { Namespace } from './namespace';  // must be first
 import { Pod, AllContainerStates } from './pod';
 import { AllEnvVarTypes } from './env_vars';
 import { AllPodVolumeTypes } from './volumes';
 import { Node } from './node';
 import { Event } from './event';
 import * as GraphQLRelay from "graphql-relay";
+
+const {connectionType: AllNamespacesConnection} =
+    GraphQLRelay.connectionDefinitions({name: 'AllNamespaces', nodeType: Namespace});
 
 const {connectionType: AllNodesConnection} =
     GraphQLRelay.connectionDefinitions({name: 'AllNodes', nodeType: Node});
@@ -52,18 +56,20 @@ const QueryType = new GraphQLObjectType({
             type: new GraphQLObjectType({
                 name: 'RootType',
                 fields: {
+                    namespaces: {
+                        type: AllNamespacesConnection,
+                        args: GraphQLRelay.connectionArgs,
+                        async resolve(root, args, {loaders}) {
+                            const namespaces = await loaders.allNamespaces;
+                            return GraphQLRelay.connectionFromArray(namespaces, args);
+                        },
+                    },
                     kubeNodes: {
                         type: AllNodesConnection,
                         args: GraphQLRelay.connectionArgs,
                         async resolve(root, args, {loaders}) {
                             const nodes = await loaders.allNodes;
                             return GraphQLRelay.connectionFromArray(nodes, args);
-                        }
-                    },
-                    testish: {
-                        type: GraphQLString,
-                        async resolve(root) {
-                          return "test";
                         }
                     },
                     pods: {
@@ -84,7 +90,7 @@ const QueryType = new GraphQLObjectType({
 });
 
 const schema = new GraphQLSchema({
-    types: [].concat(AllEnvVarTypes, AllPodVolumeTypes, AllContainerStates, [Pod, Event, Node]),
+    types: [].concat(AllEnvVarTypes, AllPodVolumeTypes, AllContainerStates, [Pod, Event, Node, Namespace]),
     query: QueryType
 });
 

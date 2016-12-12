@@ -2,6 +2,16 @@ schema {
   query: QueryType
 }
 
+type AllNamespacesConnection {
+  pageInfo: PageInfo!
+  edges: [AllNamespacesEdge]
+}
+
+type AllNamespacesEdge {
+  node: Namespace
+  cursor: String!
+}
+
 type AllNodesConnection {
   pageInfo: PageInfo!
   edges: [AllNodesEdge]
@@ -104,6 +114,16 @@ type Event implements Node {
   count: Int
 }
 
+type EventConnection {
+  pageInfo: PageInfo!
+  edges: [EventEdge]
+}
+
+type EventEdge {
+  node: Event
+  cursor: String!
+}
+
 type EventInvolvedObject {
   node: Node
   fieldRef: String
@@ -130,7 +150,7 @@ scalar JSON
 type KubeNode implements Node {
   id: ID!
   metadata: Metadata
-  events(after: String, first: Int, before: String, last: Int): NodeEventsConnection
+  events(after: String, first: Int, before: String, last: Int): EventConnection
   status: NodeStatus
 }
 
@@ -142,12 +162,19 @@ type LiveContainer {
 
 type Metadata {
   name: String!
-  namespace: String
+  namespace: Namespace
   creationTimestamp: DateTime
   deletionTimestamp: DateTime
   labels: JSON
   annotations: JSON
   ownerReferences: [OwnerReferences]
+}
+
+type Namespace implements Node {
+  id: ID!
+  metadata: Metadata
+  events(after: String, first: Int, before: String, last: Int): EventConnection
+  pods(after: String, first: Int, before: String, last: Int): PodsInNamespaceConnectionConnection
 }
 
 interface Node {
@@ -166,16 +193,6 @@ type NodeCondition {
   lastTransitionTime: DateTime
   reason: String
   message: String
-}
-
-type NodeEventsConnection {
-  pageInfo: PageInfo!
-  edges: [NodeEventsEdge]
-}
-
-type NodeEventsEdge {
-  node: Event
-  cursor: String!
 }
 
 type NodeStatus {
@@ -210,7 +227,7 @@ type Pod implements Node {
   metadata: Metadata
   spec: PodSpec
   containers: [LiveContainer]
-  events(after: String, first: Int, before: String, last: Int): PodEventsConnection
+  events(after: String, first: Int, before: String, last: Int): EventConnection
   status: PodStatus
 }
 
@@ -223,13 +240,13 @@ type PodCondition {
   message: String
 }
 
-type PodEventsConnection {
+type PodsInNamespaceConnectionConnection {
   pageInfo: PageInfo!
-  edges: [PodEventsEdge]
+  edges: [PodsInNamespaceConnectionEdge]
 }
 
-type PodEventsEdge {
-  node: Event
+type PodsInNamespaceConnectionEdge {
+  node: Pod
   cursor: String!
 }
 
@@ -275,8 +292,8 @@ type ResourceFieldRefEnvVar implements EnvVar {
 }
 
 type RootType {
+  namespaces(after: String, first: Int, before: String, last: Int): AllNamespacesConnection
   kubeNodes(after: String, first: Int, before: String, last: Int): AllNodesConnection
-  testish: String
   pods(after: String, first: Int, before: String, last: Int, namespace: String): AllPodsConnection
 }
 

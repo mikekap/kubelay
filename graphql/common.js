@@ -10,30 +10,10 @@ import { GraphQLError } from 'graphql/error'
 import { Kind } from 'graphql/language'
 import GraphQLJSON from 'graphql-type-json';
 import * as GraphQLRelay from 'graphql-relay';
+import { genericLookup } from './base';
+import { Namespace } from './namespace';
 
-export async function genericLookup({kind, namespace, name}, args, {kube, loaders}) {
-    if (kind == 'Pod') {
-        return await loaders.podLoader.load({name, namespace});
-    } else if (kind == 'Event') {
-        return await loaders.eventLoader.load({name, namespace});
-    } else if (kind == 'Node') {
-        return await loaders.nodeByIdLoader.load({name});
-    }
-    return null;
-}
-
-exports.nodeDefinitions = GraphQLRelay.nodeDefinitions(async (globalId, {loaders}) => {
-    const {type, id} = GraphQLRelay.fromGlobalId(globalId);
-    var [namespace, name] = id.split('/');
-    if (!name) {
-        name = namespace;
-        namespace = null;
-    }
-    let result = await genericLookup({kind: type, namespace, name}, {}, {loaders});
-    return result;
-});
-
-function coerceDate (value) {
+function coerceDate(value) {
     if (value instanceof String || typeof value == 'string') {
         value = new Date(value);
     }
@@ -66,9 +46,14 @@ exports.KubernetesDateType = new GraphQLScalarType({
 
 exports.Metadata = new GraphQLObjectType({
     name: 'Metadata',
-    fields: {
+    fields: () => ({
         name: {type: new GraphQLNonNull(GraphQLString)},
-        namespace: {type: GraphQLString},
+        namespace: {
+            type: Namespace,
+            resolve(meta, args, context) {
+                return genericLookup({kind: 'Namespace', name: meta.namespace}, args, context);
+            },
+        },
         creationTimestamp: {type: exports.KubernetesDateType},
         deletionTimestamp: {type: exports.KubernetesDateType},
         labels: {type: GraphQLJSON},
@@ -81,5 +66,5 @@ exports.Metadata = new GraphQLObjectType({
                 controller: {type: GraphQLBoolean},
             }
         }))}
-    }
+    })
 });

@@ -10,14 +10,15 @@ import {
     GraphQLBoolean,
     GraphQLList
 } from 'graphql/type';
-import {nodeDefinitions, Metadata, genericLookup, KubernetesDateType} from './common';
+import {genericLookup, nodeDefinitions} from './base';
+import {Metadata, KubernetesDateType} from './common';
 import * as GraphQLRelay from "graphql-relay";
 
 
 exports.Event = new GraphQLObjectType({
     name: 'Event',
     interfaces: [nodeDefinitions.nodeInterface],
-    fields: {
+    fields: () => ({
         id: GraphQLRelay.globalIdField('Event', e => `${e.metadata.namespace}/${e.metadata.name}`),
         metadata: {type: Metadata},
         involvedObject: {type: new GraphQLObjectType({
@@ -33,6 +34,9 @@ exports.Event = new GraphQLObjectType({
         firstTimestamp: {type: KubernetesDateType},
         lastTimestamp: {type: KubernetesDateType},
         count: {type: GraphQLInt},
-    },
+    }),
     isTypeOf: e => e.kind === 'Event',
 });
+
+exports.EventConnection =
+    GraphQLRelay.connectionDefinitions({name: 'Event', nodeType: exports.Event}).connectionType;

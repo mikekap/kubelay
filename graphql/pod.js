@@ -10,9 +10,10 @@ import {
     GraphQLBoolean,
     GraphQLList
 } from 'graphql/type';
-import {nodeDefinitions, Metadata, KubernetesDateType} from './common';
+import {nodeDefinitions} from './base';
+import {Metadata, KubernetesDateType} from './common';
 import {EnvVar} from './env_vars';
-import {Event} from './event';
+import {EventConnection} from './event';
 import {PodVolume} from './volumes';
 import GraphQLJSON from 'graphql-type-json';
 import * as GraphQLRelay from "graphql-relay";
@@ -121,13 +122,10 @@ exports.PodSpec = new GraphQLObjectType({
     }
 });
 
-var {connectionType: EventConnection} =
-    GraphQLRelay.connectionDefinitions({name: 'PodEvents', nodeType: Event});
-
 exports.Pod = new GraphQLObjectType({
     name: 'Pod',
     interfaces: [nodeDefinitions.nodeInterface],
-    fields: {
+    fields: () => ({
         id: GraphQLRelay.globalIdField('Pod', e => `${e.metadata.namespace}/${e.metadata.name}`),
         metadata: {type: Metadata},
         spec: {type: exports.PodSpec},
@@ -173,6 +171,6 @@ exports.Pod = new GraphQLObjectType({
                 startTime: {type: KubernetesDateType},
             },
         })},
-    },
+    }),
     isTypeOf: e => e.kind === 'Pod',
 });

@@ -1,0 +1,301 @@
+schema {
+  query: QueryType
+}
+
+type AllNodesConnection {
+  pageInfo: PageInfo!
+  edges: [AllNodesEdge]
+}
+
+type AllNodesEdge {
+  node: KubeNode
+  cursor: String!
+}
+
+type AllPodsConnection {
+  pageInfo: PageInfo!
+  edges: [AllPodsEdge]
+}
+
+type AllPodsEdge {
+  node: Pod
+  cursor: String!
+}
+
+type AwsElasticBlockStore implements Volume {
+  name: String!
+  volumeId: String
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+}
+
+type ConfigMapRefEnvVar implements EnvVar {
+  name: String!
+  configMapName: String!
+  key: String!
+}
+
+interface ContainerState {
+  __unused: String
+}
+
+type ContainerStateRunning implements ContainerState {
+  __unused: String
+  startedAt: DateTime
+}
+
+type ContainerStateTerminated implements ContainerState {
+  __unused: String
+  exitCode: Int!
+  signal: Int
+  reason: String
+  message: String
+  startedAt: DateTime
+  finishedAt: DateTime
+  containerID: String
+}
+
+type ContainerStateWaiting implements ContainerState {
+  __unused: String
+  reason: String
+  message: String
+}
+
+type ContainerStatus {
+  state: ContainerState
+  lastState: ContainerState
+  ready: Boolean
+  restartCount: Int
+  image: String
+  containerID: String
+}
+
+type ContainerType {
+  name: String!
+  image: String!
+  command: [String]
+  args: [String]
+  ports: [PortType]
+  resources: GraphQLResourcesType
+  workingDir: String
+  env: [EnvVar]
+}
+
+scalar DateTime
+
+type EmptyDir implements Volume {
+  name: String!
+}
+
+interface EnvVar {
+  name: String!
+}
+
+type Event implements Node {
+  id: ID!
+  metadata: Metadata
+  involvedObject: EventInvolvedObject
+  type: String
+  reason: String
+  message: String
+  firstTimestamp: DateTime
+  lastTimestamp: DateTime
+  count: Int
+}
+
+type EventInvolvedObject {
+  node: Node
+  fieldRef: String
+}
+
+type FieldRefEnvVar implements EnvVar {
+  name: String!
+  apiVersion: String
+  fieldPath: String!
+}
+
+type GraphQLResourcesType {
+  limits: JSON
+  requests: JSON
+}
+
+type HostPath implements Volume {
+  name: String!
+  path: String
+}
+
+scalar JSON
+
+type KubeNode implements Node {
+  id: ID!
+  metadata: Metadata
+  events(after: String, first: Int, before: String, last: Int): NodeEventsConnection
+  status: NodeStatus
+}
+
+type LiveContainer {
+  name: String!
+  spec: ContainerType
+  status: ContainerStatus
+}
+
+type Metadata {
+  name: String!
+  namespace: String
+  creationTimestamp: DateTime
+  deletionTimestamp: DateTime
+  labels: JSON
+  annotations: JSON
+  ownerReferences: [OwnerReferences]
+}
+
+interface Node {
+  id: ID!
+}
+
+type NodeAttachedVolume {
+  name: String
+  devicePath: String
+}
+
+type NodeCondition {
+  type: String
+  status: String
+  lastHeartbeatTime: DateTime
+  lastTransitionTime: DateTime
+  reason: String
+  message: String
+}
+
+type NodeEventsConnection {
+  pageInfo: PageInfo!
+  edges: [NodeEventsEdge]
+}
+
+type NodeEventsEdge {
+  node: Event
+  cursor: String!
+}
+
+type NodeStatus {
+  capacity: JSON
+  allocatable: JSON
+  phase: String
+  conditions: [NodeCondition]
+  volumesAttached: [NodeAttachedVolume]
+}
+
+type OwnerReferences {
+  kind: String
+  name: String
+  controller: Boolean
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type PersistentVolumeClaim implements Volume {
+  name: String!
+  claimName: String!
+  readOnly: Boolean
+}
+
+type Pod implements Node {
+  id: ID!
+  metadata: Metadata
+  spec: PodSpec
+  containers: [LiveContainer]
+  events(after: String, first: Int, before: String, last: Int): PodEventsConnection
+  status: PodStatus
+}
+
+type PodCondition {
+  type: String!
+  status: String!
+  lastProbeTime: DateTime
+  lastTransitionTime: DateTime
+  reason: String
+  message: String
+}
+
+type PodEventsConnection {
+  pageInfo: PageInfo!
+  edges: [PodEventsEdge]
+}
+
+type PodEventsEdge {
+  node: Event
+  cursor: String!
+}
+
+type PodSpec {
+  volumes: [Volume]
+  containers: [ContainerType]
+  serviceAccountName: String
+  dnsPolicy: String
+  hostname: String
+  subdomain: String
+}
+
+type PodStatus {
+  phase: String
+  conditions: [PodCondition]
+  message: String
+  reason: String
+  hostIP: String
+  podIP: String
+  startTime: DateTime
+}
+
+type PortType {
+  name: String
+  hostPort: Int
+  containerPort: Int!
+  protocol: String
+  hostIP: String
+}
+
+type QueryType {
+  node(id: ID!): Node
+  podById(namespace: String, name: String!): Pod
+  kubeNodeById(name: String): KubeNode
+  root: RootType
+}
+
+type ResourceFieldRefEnvVar implements EnvVar {
+  name: String!
+  containerName: String
+  resource: String!
+  divisor: String
+}
+
+type RootType {
+  kubeNodes(after: String, first: Int, before: String, last: Int): AllNodesConnection
+  testish: String
+  pods(after: String, first: Int, before: String, last: Int, namespace: String): AllPodsConnection
+}
+
+type Secret implements Volume {
+  name: String!
+  secretName: String!
+}
+
+type SecretKeyRefEnvVar implements EnvVar {
+  name: String!
+  secretName: String!
+  key: String!
+}
+
+type ValueEnvVar implements EnvVar {
+  name: String!
+  value: String!
+}
+
+interface Volume {
+  name: String!
+}

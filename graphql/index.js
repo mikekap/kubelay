@@ -11,11 +11,14 @@ app.use(graphQLHTTP((req, resp) => {
         graphiql: (process.env.NODE_ENV || 'development') === 'development',
         pretty: true,
         context: {loaders: new KubernetesLoaders(kube)},
-        formatError: error => ({
-            message: error.message,
-            locations: error.locations,
-            stack: ("" + error.stack).split("\n")
-        }),
+        formatError(error) {
+            console.log(error);
+            return {
+                message: error.message,
+                locations: error.locations,
+                stack: ("" + error.stack).split("\n")
+            };
+        },
     }
 }));
 

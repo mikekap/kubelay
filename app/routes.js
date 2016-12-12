@@ -1,12 +1,15 @@
 import React from 'react';
 import {Route} from 'react-router';
-import App from './components/App';
-import About from './components/About';
-import Contact from './components/Contact';
+import Index from './index';
+
+var RootQueries = {
+  root: () => Relay.QL`query { root }`,
+};
 
 export default (
-  <Route path="/" component={App}>
-    <Route path="/about" component={About}/>
-    <Route path="/contact" component={Contact}/>
+  <Route>
+    <Route name="index" path="/" component={Index} queries={RootQueries}>
+
+    </Route>
   </Route>
 );

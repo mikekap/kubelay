@@ -1,9 +1,7 @@
 import path from 'path';
 import express from 'express';
 import React from 'react';
-import {renderToString} from 'react-dom/server';
-import Helmet from 'react-helmet';
-import {RouterContext, match} from 'react-router';
+import {match} from 'react-router';
 import routes from './routes';
 
 const env = process.env;
@@ -21,19 +19,15 @@ app.use((req, res, next) => {
     if (error) return next(error.message);
     if (renderProps == null) return next(error);
 
-    let markup = renderToString(<RouterContext {...renderProps}/>);
-    let helmet = Helmet.rewind();
     let html = [
       `<!DOCTYPE html>`,
       `<html>`,
         `<head>`,
-          `<title>${helmet.title}</title>`,
-          helmet.meta,
-          helmet.link,
+          `<title>Kubelay</title>`,
           `<link rel="stylesheet" href="${assetsPath}/app.css"></link>`,
         `</head>`,
         `<body>`,
-          `<div id="app">${markup}</div>`,
+          `<div id="app"></div>`,
         `</body>`,
         `<script type="text/javascript" src="${assetsPath}/app.js"></script>`,
       `</html>`

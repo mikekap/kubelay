@@ -1,6 +1,8 @@
 {
   "presets": ["react"],
   "plugins": [
+    "css-in-js",
+    "./data/babelRelayPlugin",
     "transform-async-to-generator",
     "transform-object-rest-spread",
     "transform-flow-strip-types",

@@ -47,24 +47,38 @@ const QueryType = new GraphQLObjectType({
                 return await loaders.nodeByIdLoader.load(name);
             }
         },
-        kubeNodes: {
-            type: AllNodesConnection,
-            args: GraphQLRelay.connectionArgs,
-            async resolve(root, args, {loaders}) {
-                const nodes = await loaders.allNodes;
-                return GraphQLRelay.connectionFromArray(nodes, args);
-            }
-        },
-        pods: {
-            type: AllPodsConnection,
-            args: {
-                ...GraphQLRelay.connectionArgs,
-                namespace: {type: GraphQLString},
-            },
-            async resolve(root, {namespace, ...args}, {loaders}) {
-                const nodes = await loaders.podsByNamespaceLoader.load(namespace || "");
-                return GraphQLRelay.connectionFromArray(nodes, args);
-            }
+        root: {
+            async resolve(_) { return {foo: 'bar'}; },
+            type: new GraphQLObjectType({
+                name: 'RootType',
+                fields: {
+                    kubeNodes: {
+                        type: AllNodesConnection,
+                        args: GraphQLRelay.connectionArgs,
+                        async resolve(root, args, {loaders}) {
+                            const nodes = await loaders.allNodes;
+                            return GraphQLRelay.connectionFromArray(nodes, args);
+                        }
+                    },
+                    testish: {
+                        type: GraphQLString,
+                        async resolve(root) {
+                          return "test";
+                        }
+                    },
+                    pods: {
+                        type: AllPodsConnection,
+                        args: {
+                            ...GraphQLRelay.connectionArgs,
+                            namespace: {type: GraphQLString},
+                        },
+                        async resolve(root, {namespace, ...args}, {loaders}) {
+                            const nodes = await loaders.podsByNamespaceLoader.load(namespace || "");
+                            return GraphQLRelay.connectionFromArray(nodes, args);
+                        }
+                    }
+                }
+            }),
         }
     }
 });
